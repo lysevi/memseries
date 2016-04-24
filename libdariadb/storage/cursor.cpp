@@ -7,8 +7,8 @@ using namespace dariadb::storage;
 
 class Cursor_ListAppend_callback:public Cursor::Callback{
   public:
-    dariadb::storage::ChunksList*_out;
-    Cursor_ListAppend_callback(dariadb::storage::ChunksList*out){
+    dariadb::storage::ChuncksList*_out;
+    Cursor_ListAppend_callback(dariadb::storage::ChuncksList*out){
         _out=out;
 
     }
@@ -22,7 +22,7 @@ class Cursor_ListAppend_callback:public Cursor::Callback{
 Cursor::~Cursor(){
 }
 
-void Cursor::readAll(ChunksList*output){
+void Cursor::readAll(ChuncksList*output){
     std::unique_ptr<Cursor_ListAppend_callback> clbk{new Cursor_ListAppend_callback{output}};
     readAll(clbk.get());
 }

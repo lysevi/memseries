@@ -15,21 +15,21 @@ class Moc_Storage :public dariadb::storage::BaseStorage {
 public:
 	size_t writed_count;
     std::map<dariadb::Id, std::vector<dariadb::Meas>> meases;
-    dariadb::append_result append(const dariadb::Meas::PMeas , const size_t size) override{
+	dariadb::append_result append(const dariadb::Meas::PMeas , const size_t size) {
 		writed_count+=size;
 		return dariadb::append_result(size,0);
 	}
-    dariadb::append_result append(const dariadb::Meas &value) override{
+	dariadb::append_result append(const dariadb::Meas &value) {
         meases[value.id].push_back(value);
 		writed_count += 1;
 		return dariadb::append_result(1,0);
 	}
 
-    dariadb::Time minTime() override{
+	dariadb::Time minTime() {
 		return 0;
 	}
 	/// max time of writed meas
-    dariadb::Time maxTime() override{
+	dariadb::Time maxTime() {
 		return 0;
 	}
 
@@ -41,14 +41,14 @@ public:
 	}
 	void flush()override {
 	}
-    dariadb::storage::Cursor_ptr chunksByIterval(const dariadb::IdArray &, dariadb::Flag, dariadb::Time, dariadb::Time) override{
+	dariadb::storage::Cursor_ptr chunksByIterval(const dariadb::IdArray &, dariadb::Flag, dariadb::Time, dariadb::Time) {
 		return nullptr;
 	}
 
-    dariadb::storage::IdToChunkMap chunksBeforeTimePoint(const dariadb::IdArray &, dariadb::Flag, dariadb::Time) override{
+	dariadb::storage::IdToChunkMap chunksBeforeTimePoint(const dariadb::IdArray &, dariadb::Flag, dariadb::Time) {
 		return dariadb::storage::IdToChunkMap{};
 	}
-    dariadb::IdArray getIds() override { return dariadb::IdArray{}; }
+	dariadb::IdArray getIds() { return dariadb::IdArray{}; }
 };
 
 BOOST_AUTO_TEST_CASE(TimeOrderedSetTest)

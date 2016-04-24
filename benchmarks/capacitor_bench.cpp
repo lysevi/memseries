@@ -10,38 +10,38 @@
 
 class Moc_Storage :public dariadb::storage::BaseStorage {
 public:
-    dariadb::append_result append(const dariadb::Meas::PMeas, const size_t size) override{
+	dariadb::append_result append(const dariadb::Meas::PMeas, const size_t size) {
 		return dariadb::append_result(size,0);
 	}
-    dariadb::append_result append(const dariadb::Meas &) override{
+	dariadb::append_result append(const dariadb::Meas &) {
 		return dariadb::append_result(1,0);
 	}
 
-    dariadb::Time minTime() override{
+	dariadb::Time minTime() {
 		return 0;
 	}
 	/// max time of writed meas
-    dariadb::Time maxTime() override{
+	dariadb::Time maxTime() {
 		return 0;
 	}
 
     void subscribe(const dariadb::IdArray&,const dariadb::Flag& , const dariadb::storage::ReaderClb_ptr &) override {
 	}
-    dariadb::storage::Reader_ptr currentValue(const dariadb::IdArray&, const dariadb::Flag&) override{
+	dariadb::storage::Reader_ptr currentValue(const dariadb::IdArray&, const dariadb::Flag&) {
 		return nullptr;
 	}
 
 	void flush()override {
 	}
 	
-    dariadb::storage::Cursor_ptr chunksByIterval(const dariadb::IdArray &, dariadb::Flag, dariadb::Time, dariadb::Time) override{
+	dariadb::storage::Cursor_ptr chunksByIterval(const dariadb::IdArray &, dariadb::Flag, dariadb::Time, dariadb::Time) {
 		return nullptr;
 	}
 
-    dariadb::storage::IdToChunkMap chunksBeforeTimePoint(const dariadb::IdArray &, dariadb::Flag , dariadb::Time ) override{
+	dariadb::storage::IdToChunkMap chunksBeforeTimePoint(const dariadb::IdArray &, dariadb::Flag , dariadb::Time ) {
 		return dariadb::storage::IdToChunkMap{};
 	}
-    dariadb::IdArray getIds() override{ return dariadb::IdArray{}; }
+	dariadb::IdArray getIds() { return dariadb::IdArray{}; }
 };
 
 int main(int argc, char *argv[]) {

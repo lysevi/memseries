@@ -7,8 +7,7 @@
 #include "../compression/binarybuffer.h"
 
 #include <map>
-#include <set>
-#include <unordered_map>
+
 namespace dariadb {
 	namespace storage {
 
@@ -44,17 +43,16 @@ namespace dariadb {
             utils::Range range;
             compression::CopmressedWriter c_writer;
 
-            std::mutex _locker;
+            utils::Locker _locker;
             compression::BinaryBuffer_Ptr bw;
             static void* operator new(std::size_t sz);
             static void operator delete(void* ptr, std::size_t sz);
         };
 
         typedef std::shared_ptr<Chunk>    Chunk_Ptr;
-        typedef std::list<Chunk_Ptr>      ChunksList;
+        typedef std::list<Chunk_Ptr>      ChuncksList;
         typedef std::map<Id, Chunk_Ptr>   IdToChunkMap;
-        typedef std::map<Id, ChunksList> ChunkMap;
-		typedef std::unordered_map<Id, Chunk_Ptr>   IdToChunkUMap;
+        typedef std::map<Id, ChuncksList> ChunkMap;
 
 		const size_t ChunkPool_default_max_size = 200;
 
@@ -74,7 +72,7 @@ namespace dariadb {
             static std::unique_ptr<ChunkPool> _instance;
             std::list<void*> _ptrs;
 			size_t _max_size;
-            std::mutex _locker;
+            utils::Locker _locker;
         };
 	}
 }
