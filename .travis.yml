@@ -68,5 +68,5 @@ matrix:
 #      env: CLANG=TRUE GCOV=FALSE
 
 script: 
-   - travis encrypt COVERITY_SCAN_TOKEN=KgdhLtxiiaMHA19InT-uIA
+   - travis encrypt --no-interactive COVERITY_SCAN_TOKEN=KgdhLtxiiaMHA19InT-uIA
    - bash .travis/build.sh
