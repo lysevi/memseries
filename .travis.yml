@@ -5,8 +5,19 @@ language: cpp
 cache:
   directories:
     - $HOME/travisCacheDir
+env:
+  global:
+    - coverity_branch: dev
 
 addons:
+  coverity_scan:
+    project:
+      name: "lysevi/dariadb"
+      description: "Build submitted via Travis CI"
+    build_command_prepend: ""
+    build_command: "bash .travis/build.sh"
+    branch_pattern: $coverity_branch
+    notification_email: lysevi@gmail.com
   apt:
     sources:
       - ubuntu-toolchain-r-test
