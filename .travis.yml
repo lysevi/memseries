@@ -7,7 +7,7 @@ cache:
     - $HOME/travisCacheDir
 env:
   global:
-    - secure: "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC4GIgqXdPOkehPwITfExrH+NrT\nq3uJlNS0ZWeEd/QCVLayVGTScAzYrJZcC3hw09rHe9fQv0VRtvfGN1O4Zh4Q1cTI\n1DBswD5F68SFxWN/DbPafCmu+wuCEr767iCqw8JwxynChyRYMOcdf22VQz8QUbfb\nCKwHayMOtCC8XiPLBQIDAQAB"
+    - secure: "hcYXA9Ku8X0zpXM8raH/rSucH+GO58Jo+VLm2IrxkyZxOcH8uepPAgs7iwcZ4gtnYo93w7x2NQE/A9z3u3uxKG70+A2AhYGk2OlE3mnV9TMvZaleb2JIEXaaEsVAl+xeMdidJG2/gXm5+5SqZLnHpkzG3PRGGhf5K4AdlnKKL/bbw1NnHvRAvI9P2WgWT5qDCMkiKV8oTUBk0+Wy/yxxlIhTscUXKHKynxwigXteJV03B/gv3EWw/7hWV7sMasb4JOOZQ4qLH4TZ2NHGCNa65x1j6aBN1+lfLsaLtfAw1Z99N2KvhmEYidmxtvxaPWhQOQiHEMlK3JLeLhBPkIhsX+ITl+bdRt0Mv0c1zRXGAnsc7l62xMRmcpONNIibYRX0b7l8LYQTjy3uGzoClswYwPCRYhoAoD27us+IJ6ia2xXfNv9S7eROm0jtCL6JAV6vrNdi/qmTkeny3w7P64iGrF0hCc+DyvuogFfEYRf8C+xuCzRNb3RzjaDL4I4QMy9MyjATqxplefFN2i8+9Qf2wUN8G9z7BZj2w85JaA03fTNOiMe8YcRvTvs+ZNYx9Kvp9a0hR/18ad7SzxEQL8amiAQfxIlOV5eViP5NhSYfH9am/tZUzuAra9/FBHcunSwkeoSEBaxz72Mv1DnSNqDLt+7Rh1K1CeKoQRxn2ZRnyE4="
     - coverity_branch: dev
 
 addons:
@@ -43,7 +43,7 @@ before_install:
    - tar xf lcov_1.11.orig.tar.gz
    - sudo make -C lcov-1.11/ install
    - gem install coveralls-lcov
-   - gem install travis
+#   - gem install travis
    - cmake --version
    - cd ${TRAVIS_BUILD_DIR}
    - git submodule init
@@ -68,5 +68,4 @@ matrix:
 #      env: CLANG=TRUE GCOV=FALSE
 
 script: 
-   - travis encrypt --no-interactive COVERITY_SCAN_TOKEN=KgdhLtxiiaMHA19InT-uIA
    - bash .travis/build.sh
