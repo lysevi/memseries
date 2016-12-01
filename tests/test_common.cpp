@@ -20,7 +20,10 @@ public:
     count++;
     all.push_back(v);
   }
-  void is_end() override { is_end_called++; }
+  void is_end() override {
+	  is_end_called++;
+	  storage::IReaderClb::is_end();
+  }
   size_t count;
   MeasList all;
   std::mutex _locker;
@@ -181,9 +184,7 @@ void readIntervalCheck(storage::IMeasStorage *as, Time from, Time to, Time step,
   }
 
   if (check_stop_flag) {
-    while (clbk->is_end_called != 1) {
-		std::this_thread::yield();
-    }
+	  clbk->wait();
   }
   delete clbk;
 

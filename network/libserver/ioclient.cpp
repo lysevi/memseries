@@ -59,6 +59,7 @@ void IOClient::ClientDataReader::call(const Meas &m) {
 }
 
 void IOClient::ClientDataReader::is_end() {
+	IReaderClb::is_end();
   send_buffer();
 
   auto nd = _parent->env->nd_pool->construct(DATA_KINDS::APPEND);

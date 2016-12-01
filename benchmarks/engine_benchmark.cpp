@@ -33,7 +33,10 @@ public:
     is_end_called = false;
   }
   void call(const dariadb::Meas &) override { count++; }
-  void is_end() override { is_end_called = true; }
+  void is_end() override {
+	is_end_called = true;
+    IReaderClb::is_end();
+  }
   std::atomic<size_t> count;
   bool is_end_called;
 };
@@ -257,9 +260,8 @@ void read_all_bench(IMeasStorage_ptr &ms, Time start_time, Time max_time,
   auto start = clock();
 
   ms->foreach (qi, clbk.get());
-  while (!clbk->is_end_called) {
-	  std::this_thread::yield();
-  }
+  clbk->wait();
+
   auto elapsed = (((float)clock() - start) / CLOCKS_PER_SEC);
   std::cout << "readed: " << clbk->count << std::endl;
   std::cout << "time: " << elapsed << std::endl;
