@@ -166,7 +166,7 @@ void readBenchark(const dariadb::IdSet &all_id_set, dariadb::storage::IMeasStora
     cur_id = 0;
     std::shared_ptr<BenchCallback> clbk{new BenchCallback};
     for (size_t i = 0; i < reads_count; i++) {
-
+	  clbk->is_end_called = false;
       Id2Times curval = interval_queries[i];
       std::uniform_int_distribution<dariadb::Time> uniform_dist(std::get<1>(curval),
                                                                 std::get<2>(curval));
@@ -179,6 +179,11 @@ void readBenchark(const dariadb::IdSet &all_id_set, dariadb::storage::IMeasStora
       cur_id = (cur_id + 1) % random_ids.size();
       auto qi = dariadb::storage::QueryInterval(current_ids, 0, f, t);
       stor->foreach (qi, clbk.get());
+	  if (check_is_end) {
+		  while (!clbk->is_end_called) {
+			  std::this_thread::yield();
+		  }
+	  }
     }
     auto elapsed = (((float)clock() - start) / CLOCKS_PER_SEC) / reads_count;
     if (!quiet) {
