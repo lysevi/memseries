@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE(ByStepIntervalCalculationTest) {
 	BOOST_CHECK_EQUAL(ByStepStorage::intervalForTime(STEP_KIND::MINUTE, 1, 65*1000), uint64_t(1));
 }
 
-BOOST_AUTO_TEST_CASE(IOAdopterTest) {
+BOOST_AUTO_TEST_CASE(IOAdapterTest) {
   std::cout << "IOAdopterInitTest" << std::endl;
   auto storage_path = "testBySTepStorage";
   if (dariadb::utils::fs::path_exists(storage_path)) {
@@ -39,6 +39,16 @@ BOOST_AUTO_TEST_CASE(IOAdopterTest) {
   auto fname = dariadb::utils::fs::append_path(storage_path, "io_adapter.db");
   {
     const int insertion_count = 10;
+	auto settings =
+		dariadb::storage::Settings_ptr{ new dariadb::storage::Settings(storage_path) };
+	settings->chunk_size.value = 128;
+
+	auto _engine_env = dariadb::storage::EngineEnvironment_ptr{
+		new dariadb::storage::EngineEnvironment() };
+	_engine_env->addResource(dariadb::storage::EngineEnvironment::Resource::SETTINGS,
+		settings.get());
+	dariadb::utils::async::ThreadManager::start(settings->thread_pools_params());
+
     auto io_adapter = std::make_unique<dariadb::storage::IOAdapter>(fname);
     BOOST_CHECK_EQUAL(dariadb::utils::fs::ls(storage_path, ".db").size(), size_t(1));
 
@@ -154,7 +164,7 @@ BOOST_AUTO_TEST_CASE(IOAdopterTest) {
 		BOOST_CHECK_LT(minTime, maxTime);
 	}
   }
-
+  dariadb::utils::async::ThreadManager::stop();
   if (dariadb::utils::fs::path_exists(storage_path)) {
     dariadb::utils::fs::rm(storage_path);
   }

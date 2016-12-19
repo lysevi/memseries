@@ -1,5 +1,6 @@
 #include <libdariadb/storage/bystep/io_adapter.h>
 #include <libdariadb/utils/logger.h>
+#include <libdariadb/utils/thread_manager.h>
 #include <cassert>
 #include <extern/libsqlite3/sqlite3.h>
 #include <string>
@@ -11,6 +12,8 @@
 
 using namespace dariadb;
 using namespace dariadb::storage;
+using namespace dariadb::utils;
+using namespace dariadb::utils::async;
 
 const char *BYSTEP_CREATE_SQL = "PRAGMA page_size = 4096;"  
                                 "PRAGMA journal_mode =WAL;"
@@ -34,8 +37,10 @@ public:
       THROW_EXCEPTION("Can't open database: ", err_msg);
     }
     init_tables();
-	_write_thread = std::thread{ std::bind(&IOAdapter::Private::write_thread_func,this) };
 	_stop_flag = false;
+	_is_stoped = false;
+	AsyncTask at = std::bind(&IOAdapter::Private::write_thread_func, this, std::placeholders::_1);
+	ThreadManager::instance()->post(THREAD_COMMON_KINDS::COMMON, AT(at));
   }
   ~Private() { stop(); }
 
@@ -43,8 +48,9 @@ public:
     if (_db != nullptr) {
 		flush();
 		_stop_flag = true;
-		_chunks_list_cond.notify_all();
-		_write_thread.join();
+		while (!_is_stoped) {
+			std::this_thread::yield();
+		}
       sqlite3_close(_db);
       _db = nullptr;
       logger("engine: io_adapter - stoped");
@@ -63,7 +69,6 @@ public:
 	  cmm.max = max;
 	  std::lock_guard<std::mutex> lg(_chunks_list_locker);
 	  _chunks_list.push_back(cmm);
-	  _chunks_list_cond.notify_all();
   }
 
   void _append(const Chunk_Ptr &ch, Time min, Time max) {
@@ -346,13 +351,31 @@ public:
 	  _chunks_list_locker.unlock();
   }
 
-  void write_thread_func() {
+  void write_thread_func(const ThreadInfo&ti) {
+	  TKIND_CHECK(THREAD_COMMON_KINDS::COMMON, ti.kind);
 	  while (!_stop_flag) {
-		  std::unique_lock<std::mutex> ulg(_dropper_locker);
-		  _chunks_list_cond.wait(ulg, [&]() {return _chunks_list.size() != 0 || _stop_flag; });
-		
+		  while(_chunks_list.empty()) {
+			  if (_stop_flag) {
+				  break;
+			  }
+			  ti.yield();
+		  }
+		  if (_stop_flag) {
+			  break;
+		  }
+		  while (!_dropper_locker.try_lock()) {
+			  if (_stop_flag) {
+				  break;
+			  }
+			  ti.yield();
+		  }
+		  if (_stop_flag) {
+			  break;
+		  }
 		  if (_chunks_list.size() != 0) {
-			  _chunks_list_locker.lock();
+			  while (!_chunks_list_locker.try_lock()) {
+				  ti.yield();
+			  }
 			  std::list<ChunkMinMax> local_copy{ _chunks_list.begin(),_chunks_list.end() };
 			  _chunks_list.clear();
 			  _chunks_list_locker.unlock();
@@ -372,15 +395,14 @@ public:
 
 			  logger("engine: io_adapter - write ", local_copy.size()," chunks. elapsed time - ", elapsed);
 		  }
-
-		  
+		  _dropper_locker.unlock();		  
 	  }
 	  logger_info("engine: io_adapter - stoped.");
+	  _is_stoped = true;
   }
 
   void flush() {
 	  while (_chunks_list.size() != 0) {
-		  _chunks_list_cond.notify_one();
 		  std::this_thread::sleep_for(std::chrono::microseconds(100));
 	  }
   }
@@ -394,12 +416,11 @@ public:
   }
 
   sqlite3 *_db;
-  std::thread           _write_thread;
   bool                  _stop_flag;
+  bool                  _is_stoped;
   std::list<ChunkMinMax> _chunks_list;
   std::mutex            _chunks_list_locker;
   std::mutex            _dropper_locker;
-  std::condition_variable _chunks_list_cond;
 };
 
 IOAdapter::IOAdapter(const std::string &fname) : _impl(new IOAdapter::Private(fname)) {}
