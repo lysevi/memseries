@@ -23,6 +23,7 @@ public:
   EXPORT Time minTime();
   EXPORT Time maxTime();
   EXPORT bool minMaxTime(Id id, Time *minResult, Time *maxResult);
+  EXPORT void flush();
 private:
   class Private;
   std::unique_ptr<Private> _impl;

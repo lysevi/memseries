@@ -3,6 +3,10 @@
 #include <cassert>
 #include <extern/libsqlite3/sqlite3.h>
 #include <string>
+#include <list>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 using namespace dariadb;
 using namespace dariadb::storage;
@@ -27,18 +31,39 @@ public:
       THROW_EXCEPTION("Can't open database: ", err_msg);
     }
     init_tables();
+	_write_thread = std::thread{ std::bind(&IOAdapter::Private::write_thread_func,this) };
+	_stop_flag = false;
   }
   ~Private() { stop(); }
 
   void stop() {
     if (_db != nullptr) {
+		flush();
+		_stop_flag = true;
+		_chunks_list_cond.notify_all();
+		_write_thread.join();
       sqlite3_close(_db);
       _db = nullptr;
       logger("engine: io_adapter - stoped");
     }
   }
+  struct ChunkMinMax {
+	  Chunk_Ptr ch;
+	  Time min;
+	  Time max;
+  };
 
   void append(const Chunk_Ptr &ch, Time min, Time max) {
+	  ChunkMinMax cmm;
+	  cmm.ch = ch;
+	  cmm.min = min;
+	  cmm.max = max;
+	  std::lock_guard<std::mutex> lg(_chunks_list_locker);
+	  _chunks_list.push_back(cmm);
+	  _chunks_list_cond.notify_all();
+  }
+
+  void _append(const Chunk_Ptr &ch, Time min, Time max) {
     logger("engine: io_adapter - add chunk #", ch->header->id, " id:",
            ch->header->first.id);
     const std::string sql_query =
@@ -67,6 +92,7 @@ public:
   }
 
   ChunksList readInterval(uint64_t period_from, uint64_t period_to, Id meas_id) {
+	  std::lock_guard<std::mutex> lg(_chunks_list_locker);
     ChunksList result;
     const std::string sql_query = "SELECT chunk_header, chunk_buffer FROM Chunks WHERE "
                                   "meas_id=? AND number>=? AND number<=? ORDER BY number";
@@ -109,9 +135,24 @@ public:
       rc = sqlite3_finalize(pStmt);
     } while (rc == SQLITE_SCHEMA);
 
-    return result;
+	IdSet ids;
+	//TODO move to method
+	for (auto&cmm : _chunks_list) {
+		ids.insert(cmm.ch->header->first.id);
+		if (cmm.ch->header->first.id == meas_id){
+			if (utils::inInterval(period_from, period_to, cmm.ch->header->id)) {
+				result.push_back(cmm.ch);
+			}
+		}
+	}
+	std::vector<Chunk_Ptr> ch_vec{ result.begin(), result.end() };
+	std::sort(ch_vec.begin(), ch_vec.end(), [](Chunk_Ptr ch1, Chunk_Ptr ch2) {return ch1->header->id < ch2->header->id; });
+	
+	return ChunksList(ch_vec.begin(), ch_vec.end());
   }
+
   Chunk_Ptr readTimePoint(uint64_t period, Id meas_id) {
+	  std::lock_guard<std::mutex> lg(_chunks_list_locker);
 	Chunk_Ptr result;
     
     const std::string sql_query = "SELECT chunk_header, chunk_buffer FROM Chunks WHERE "
@@ -156,10 +197,20 @@ public:
       rc = sqlite3_finalize(pStmt);
     } while (rc == SQLITE_SCHEMA);
 
+	if (result != nullptr) {
+		for (auto&cmm : _chunks_list) {
+			if (cmm.ch->header->id == period&&cmm.ch->header->first.id == meas_id) {
+				result = cmm.ch;
+				break;
+			}
+		}
+	}
     return result;
   }
 
   void replace(const Chunk_Ptr &ch, Time min, Time max) {
+	  this->flush();
+	  std::lock_guard<std::mutex> lg(_chunks_list_locker);
     logger("engine: io_adapter - replace chunk #", ch->header->id, " id:",
            ch->header->first.id);
     const std::string sql_query = "UPDATE Chunks SET min_time=?, max_time=?, "
@@ -189,6 +240,7 @@ public:
 
   // min and max
   std::tuple<Time, Time> minMax() {
+	  std::lock_guard<std::mutex> lg(_chunks_list_locker);
     logger("engine: io_adapter - minMax");
     const std::string sql_query = "SELECT min(min_time), max(max_time), count(max_time) FROM Chunks";
     sqlite3_stmt *pStmt;
@@ -215,6 +267,10 @@ public:
       rc = sqlite3_finalize(pStmt);
     } while (rc == SQLITE_SCHEMA);
 
+	for (auto&cmm : _chunks_list) {
+		min = std::min(min, cmm.min);
+		max = std::min(max, cmm.max);
+	}
     return std::tie(min, max);
   }
 
@@ -223,6 +279,7 @@ public:
   Time maxTime() { return std::get<1>(minMax()); }
 
   bool minMaxTime(Id id, Time *minResult, Time *maxResult) {
+	  std::lock_guard<std::mutex> lg(_chunks_list_locker);
 	  logger("engine: io_adapter - minMaxTime #",id);
 	  const std::string sql_query = "SELECT min(min_time), max(max_time), count(max_time) FROM Chunks WHERE meas_id=?";
 	  sqlite3_stmt *pStmt;
@@ -251,6 +308,13 @@ public:
 		  rc = sqlite3_finalize(pStmt);
 	  } while (rc == SQLITE_SCHEMA);
 
+	  for (auto&cmm : _chunks_list) {
+		  if (cmm.ch->header->first.id == id) {
+			  result = true;
+			  *minResult = std::min(*minResult, cmm.min);
+			  *maxResult = std::min(*maxResult, cmm.max);
+		  }
+	  }
 	  return result;
   }
 
@@ -265,7 +329,30 @@ public:
     }
   }
 
+  void write_thread_func() {
+	  while (!_stop_flag) {
+		  std::unique_lock<std::mutex> ulg(_chunks_list_locker);
+		  _chunks_list_cond.wait(ulg, [&]() {return _chunks_list.size() != 0 || _stop_flag; });
+		
+		  for (auto&c : _chunks_list) {
+			  this->_append(c.ch, c.min, c.max);
+		  }
+		  _chunks_list.clear();
+	  }
+	  logger_info("engine: io_adapter - stoped.");
+  }
+
+  void flush() {
+	  while (_chunks_list.size() != 0) {
+		  std::this_thread::sleep_for(std::chrono::microseconds(100));
+	  }
+  }
   sqlite3 *_db;
+  std::thread           _write_thread;
+  bool                  _stop_flag;
+  std::list<ChunkMinMax> _chunks_list;
+  std::mutex            _chunks_list_locker;
+  std::condition_variable _chunks_list_cond;
 };
 
 IOAdapter::IOAdapter(const std::string &fname) : _impl(new IOAdapter::Private(fname)) {}
@@ -304,4 +391,8 @@ Time IOAdapter::maxTime() {
 
 bool IOAdapter::minMaxTime(Id id, Time *minResult, Time *maxResult) {
   return _impl->minMaxTime(id, minResult, maxResult);
+}
+
+void IOAdapter::flush() {
+	_impl->flush();
 }
