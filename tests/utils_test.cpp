@@ -26,7 +26,6 @@ BOOST_AUTO_TEST_CASE(TimeToString) {
 
 BOOST_AUTO_TEST_CASE(TimeRound) {
   auto ct = dariadb::timeutil::current_time();
-  auto ct_d = dariadb::timeutil::to_datetime(ct);
   {
     auto rounded = dariadb::timeutil::round_to_seconds(ct);
     auto rounded_d = dariadb::timeutil::to_datetime(rounded);
