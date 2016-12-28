@@ -134,6 +134,7 @@ public:
         } else {
           results[num] = MMRes(false, lmin, lmax);
         }
+		return false;
       };
       task_res[num] =
           ThreadManager::instance()->post(THREAD_KINDS::DISK_IO, AT(at));
@@ -207,6 +208,7 @@ public:
 				result.push_back(s);
 			}
 		}
+		return false;
 	};
 	auto pm_async = ThreadManager::instance()->post(THREAD_KINDS::DISK_IO, AT(at));
 	pm_async->wait();
@@ -246,6 +248,7 @@ public:
 			pg->readLinks(query, to_read, clbk);
 			to_read.clear();
 		}
+		return false;
 	};
 	auto pm_async = ThreadManager::instance()->post(THREAD_KINDS::DISK_IO, AT(at));
 	pm_async->wait();
@@ -306,6 +309,7 @@ public:
 				break;
 			}
 		}
+		return false;
 	};
 	auto pm_async = ThreadManager::instance()->post(THREAD_KINDS::DISK_IO, AT(at));
 	pm_async->wait();
@@ -496,6 +500,7 @@ public:
 			  auto sub_results = pg->loadMinMax();
 			  minmax_append(result, sub_results);
 		  }
+		  return false;
         };
 	  auto at_as=
 		  ThreadManager::instance()->post(THREAD_KINDS::DISK_IO, AT(at));
