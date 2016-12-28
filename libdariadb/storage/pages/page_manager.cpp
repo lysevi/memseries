@@ -88,7 +88,6 @@ public:
     for (auto n : pages) {
       auto file_name = utils::fs::append_path(_settings->raw_path.value(), n);
 	  try {
-		  PageHeader hdr = Page::readHeader(file_name);
 		  auto index_filename = PageIndex::index_name_from_page_name(n);
 		  auto index_file_path = utils::fs::append_path(_settings->raw_path.value(), index_filename);
 		  if (!utils::fs::path_exists(index_file_path)) {
