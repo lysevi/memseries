@@ -347,7 +347,7 @@ void Page::update_index_recs(const PageHeader &phdr) {
   for(size_t i=0;i<phdr.addeded_chunks;++i){
 	  ChunkHeader info;
 	  auto readed=std::fread(&info, sizeof(ChunkHeader), 1, page_io);
-	  if (readed < sizeof(ChunkHeader)) {
+	  if (readed < size_t(1)) {
 		  THROW_EXCEPTION("engine: page read error - ", this->filename);
 	  }
       auto index_reccord= PageInner::init_chunk_index_rec(info, &ihdr);
@@ -390,13 +390,13 @@ Chunk_Ptr Page::readChunkByOffset(FILE* page_io, int offset) {
 	std::fseek(page_io, offset, SEEK_SET);
 	ChunkHeader *cheader = new ChunkHeader;
 	auto readed = std::fread(cheader, sizeof(ChunkHeader), 1, page_io);
-	if (readed < sizeof(ChunkHeader)) {
+	if (readed < size_t(1)) {
 		THROW_EXCEPTION("engine: page read error - ", this->filename);
 	}
 	uint8_t *buffer = new uint8_t[cheader->size];
 	memset(buffer, 0, cheader->size);
 	readed=std::fread(buffer, cheader->size, 1, page_io);
-	if (readed < cheader->size) {
+	if (readed < size_t(1)) {
 		THROW_EXCEPTION("engine: page read error - ", this->filename);
 	}
 	Chunk_Ptr ptr = nullptr;
