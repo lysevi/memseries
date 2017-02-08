@@ -5,7 +5,7 @@
 #include <string>
 
 #ifdef UNIX_OS
-#include <strstream>
+#include <sstream>
 #include <execinfo.h>
 #include <stdlib.h>
 #include <unistd.h>
