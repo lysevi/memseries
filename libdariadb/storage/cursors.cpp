@@ -38,8 +38,9 @@ get_cursor_with_min_time(std::vector<Time> &top_times,
       min_time_index = i;
     }
   }
-  ENSURE(min_time != MAX_TIME);
   auto reader_it = readers[min_time_index];
+  ENSURE(min_time != MAX_TIME);
+  ENSURE(!reader_it->is_end());
   return std::make_pair(min_time_index, reader_it.get());
 }
 
@@ -132,20 +133,21 @@ Meas MergeSortCursor::readNext() {
   _top_times[index_and_reader.first] = cursors_inner::get_top_time(cursor);
   _is_end_status[index_and_reader.first] = cursor->is_end();
 
-  //// skip duplicates.
-  //for (size_t i = 0; i < _readers.size(); ++i) {
-  //  if (!_is_end_status[i] && _top_times[i] == result.time) {
-  //    auto r = _readers[i].get();
-  //    while (!r->is_end()) {
-  //      if (r->top().time != result.time) {
-  //        break;
-  //      }
-  //      r->readNext();
-  //    }
-  //    _top_times[i] = cursors_inner::get_top_time(r);
-  //    _is_end_status[i] = r->is_end();
-  //  }
-  //}
+  // skip duplicates.
+  for (size_t i = 0; i < _readers.size(); ++i) {
+    if (!_is_end_status[i] && _top_times[i] == result.time) {
+      auto r = _readers[i].get();
+      while (!r->is_end()) {
+        if (r->top().time != result.time) {
+          break;
+        }
+        r->readNext();
+      }
+      _top_times[i] = cursors_inner::get_top_time(r);
+      _is_end_status[i] = r->is_end();
+    }
+	ENSURE(_is_end_status[i] == _readers[i]->is_end());
+  }
   return result;
 }
 
