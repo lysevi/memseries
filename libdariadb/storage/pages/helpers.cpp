@@ -165,7 +165,7 @@ uint64_t writeToFile(FILE *file, FILE *index_file, PageFooter &phdr,
       ENSURE(ch->checkChecksum());
 	  auto rdr = ch->getReader();
 	  while (!rdr->is_end()) {
-		  auto m=rdr->readNext();
+		  rdr->readNext();
 	  }
       ch->close();
     }
