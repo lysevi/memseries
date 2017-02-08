@@ -100,6 +100,7 @@ MergeSortCursor::MergeSortCursor(const CursorsList &readers) {
 
   _readers.reserve(tmp_readers_list.size());
   for (auto r : tmp_readers_list) {
+    ENSURE(!r->is_end());
     _readers.emplace_back(r);
   }
 
@@ -134,6 +135,8 @@ Meas MergeSortCursor::readNext() {
 
   // skip duplicates.
   for (size_t i = 0; i < _readers.size(); ++i) {
+    ENSURE(_is_end_status[i] == _readers[i]->is_end());
+
     if (!_is_end_status[i] && _top_times[i] == result.time) {
       auto r = _readers[i].get();
       while (!r->is_end()) {
@@ -145,7 +148,8 @@ Meas MergeSortCursor::readNext() {
       _top_times[i] = cursors_inner::get_top_time(r);
       _is_end_status[i] = r->is_end();
     }
-	ENSURE(_is_end_status[i] == _readers[i]->is_end());
+
+    ENSURE(_is_end_status[i] == _readers[i]->is_end());
   }
   return result;
 }
