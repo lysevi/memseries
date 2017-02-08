@@ -50,11 +50,14 @@ CursorsList unpack_readers(const CursorsList &readers) {
     // TODO use type enum.
     auto msr = dynamic_cast<MergeSortCursor *>(r.get());
     if (msr == nullptr) {
+      ENSURE(!r->is_end());
       tmp_readers_list.emplace_back(r);
     } else {
       for (auto sub_reader : msr->_readers) {
+        ENSURE(!sub_reader->is_end());
         tmp_readers_list.emplace_back(sub_reader);
       }
+      msr->_readers.clear();
     }
   }
   return tmp_readers_list;
@@ -114,6 +117,7 @@ MergeSortCursor::MergeSortCursor(const CursorsList &readers) {
   for (auto &r : _readers) {
     _minTime = std::min(_minTime, r->minTime());
     _maxTime = std::max(_maxTime, r->maxTime());
+    ENSURE(!r->is_end());
   }
   ENSURE(!_readers.empty());
   ENSURE(_minTime != MAX_TIME);
