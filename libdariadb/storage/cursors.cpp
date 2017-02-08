@@ -21,7 +21,6 @@ void fill_top_times(std::vector<Time> &top_times,
                     const std::vector<Cursor_Ptr> &readers) {
   size_t pos = 0;
   for (auto r : readers) {
-    ENSURE(!r->is_end());
     top_times[pos++] = get_top_time(r.get());
   }
 }
