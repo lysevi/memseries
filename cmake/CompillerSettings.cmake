@@ -8,6 +8,8 @@ IF(WIN32)
   MESSAGE(STATUS "WIN32:")
   MESSAGE(STATUS "+ boost root: " ${BOOST_ROOT})
 else(WIN32)
+  MESSAGE(STATUS "UNIX")
+  add_definitions(-DUNIX_OS)
   set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_DEBUG}" CACHE STRING
     "Flags used by the C++ compiler during coverage builds."
     FORCE)

@@ -4,6 +4,13 @@
 #include <stdexcept>
 #include <string>
 
+#ifdef UNIX_OS
+#include <execinfo.h>
+#include <stdlib.h>
+#include <unistd.h>
+#define BT_BUF_SIZE 512
+#endif
+
 #define CODE_POS (dariadb::utils::CodePos(__FILE__, __LINE__, __FUNCTION__))
 
 #define MAKE_EXCEPTION(msg) dariadb::utils::Exception::create_and_log(CODE_POS, msg)
@@ -45,7 +52,32 @@ public:
     auto expanded_message = utils::strings::args_to_string(message...);
     auto ss = std::string("FATAL ERROR. The Exception will be thrown! ") +
               pos.toString() + " Message: " + expanded_message;
-    logger_fatal(ss);
+    
+#ifdef UNIX_OS
+	int j, nptrs;
+	void *buffer[BT_BUF_SIZE];
+	char **strings;
+
+	nptrs = backtrace(buffer, BT_BUF_SIZE);
+	ss<<"backtrace() returned "<< nptrs<< " addresses"<<std::endl;
+
+	/* The call backtrace_symbols_fd(buffer, nptrs, STDOUT_FILENO)
+	would produce similar output to the following: */
+
+	strings = backtrace_symbols(buffer, nptrs);
+	if (strings == NULL) {
+		ss<<"** backtrace_symbols";
+	}
+	else {
+		ss << "BackTrace:" << std::endl;
+		for (j = 0; j < nptrs; j++) {
+			ss << strings[j] << std::endl;
+		}
+	}
+	free(strings);
+#endif
+
+	logger_fatal(ss);
     return Exception(expanded_message);
   }
 
