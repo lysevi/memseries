@@ -17,7 +17,7 @@
 #include <libdariadb/utils/fs.h>
 #include <libdariadb/utils/logger.h>
 
-class Moc_Dropper : public dariadb::storage::IWALDropper {
+class Moc_Dropper : public dariadb::IWALDropper {
 public:
   size_t writed_count;
   std::set<std::string> files;
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(WalInitTest) {
     wal_files = dariadb::utils::fs::ls(storage_path, dariadb::storage::WAL_FILE_EXT);
     BOOST_CHECK_EQUAL(wal_files.size(), size_t(0));
 
-    auto e = dariadb::Meas::empty();
+    auto e = dariadb::Meas();
 
     size_t id_count = 10;
 
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(WalInitTest) {
 
     dariadb::MeasList out;
 
-    out = wal->readInterval(dariadb::storage::QueryInterval(
+    out = wal->readInterval(dariadb::QueryInterval(
         dariadb::IdArray(id_set.begin(), id_set.end()), 0, 0, writes_count));
     BOOST_CHECK_EQUAL(out.size(), writes_count);
   }
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(WalManager_CommonTest) {
 
     auto am = dariadb::storage::WALManager::create(_engine_env);
 
-    dariadb::storage::QueryInterval qi(dariadb::IdArray{0}, dariadb::Flag(), from, to);
+    dariadb::QueryInterval qi(dariadb::IdArray{0}, dariadb::Flag(), from, to);
     auto out = am->readInterval(qi);
     BOOST_CHECK_EQUAL(out.size(), dariadb_test::copies_count);
 
