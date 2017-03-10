@@ -85,7 +85,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   endif(ASAN_UBSAN)
   if(MSAN)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=leak")
-  endif(CLANG_MSAN)  
+  endif(MSAN)  
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")

@@ -56,10 +56,10 @@ matrix:
       env: GCOV=FALSE CLANG=FALSE
     - os: linux
       compiler: gcc-6
-      env: SANITIZER=MSAN GCOV=TRUE CLANG=FALSE
+      env: SANITIZER=MSAN GCOV=FALSE CLANG=FALSE
     - os: linux
       compiler: gcc-6
-      env: SANITIZER=ASAN_UBSAN CLANG=FALSE GCOV=FALSE
+      env: SANITIZER=ASAN_UBSAN GCOV=FALSE CLANG=FALSE
 
 script: 
     - bash .travis/build.sh
