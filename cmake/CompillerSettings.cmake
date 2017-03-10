@@ -80,12 +80,14 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 
 
   if(ASAN_UBSAN)
+    MESSAGE(STATUS "address saniteze enabled.")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -fuse-ld=gold")
   endif(ASAN_UBSAN)
   if(MSAN)
+    MESSAGE(STATUS "leak saniteze enabled.")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=leak")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=leak  -fuse-ld=gold")
   endif(MSAN)  
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
