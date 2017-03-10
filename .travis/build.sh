@@ -25,6 +25,7 @@ if [ "$CLANG" == "FALSE" ]; then
     echo "gcc compiller " `gcc-6 --version`
     export CC="gcc-6"
     export CXX="g++-6"
+	echo "sani ==> ${SANITIZER}"
     if [[ "$GCOV" == "TRUE" ]]; then
        echo "enable test coverage..."
        cmake -DBoost_USE_STATIC_LIBS=ON -DENABLE_DOUBLECHECKS=ON -DBoost_USE_MULTITHREADED=ON  -DBoost_USE_STATIC_RUNTIME=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE="${CMAKE_CXX_FLAGS_RELEASE} --coverage -O0" \
