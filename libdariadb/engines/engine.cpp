@@ -340,9 +340,10 @@ public:
     }
     auto t_mm = this->_top_level_storage->loadMinMax();
 
+    minmax_append(p_mm, t_mm);
+
     this->unlock_storage();
 
-    minmax_append(p_mm, t_mm);
     return p_mm;
   }
 
@@ -750,7 +751,9 @@ public:
   }
   void fsck() {
     logger_info("engine", _settings->alias, ": fsck ", _settings->storage_path.value());
+    this->lock_storage();
     _page_manager->fsck();
+    this->unlock_storage();
   }
 
   void eraseAction() {
@@ -767,6 +770,7 @@ public:
       auto candidateToErase = pages.front();
       logger_info("engine", _settings->alias, ": eraseAction - rm ", candidateToErase);
       this->_page_manager->erase_page(candidateToErase);
+      logger_info("engine", _settings->alias, ": eraseAction - complete.");
       this->unlock_storage();
     }
   }
