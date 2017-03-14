@@ -80,11 +80,22 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 include_directories(extern)
 include_directories(extern/spdlog/include)
 include_directories(extern/stx-btree/include)
+include_directories(extern/jemalloc-cmake/include/jemalloc)
 
+if(MSVC)
+include_directories(extern/jemalloc-cmake/include/msvc_compat)
+endif()
+
+set(BuildTests OFF)
+add_subdirectory(extern/jemalloc-cmake)
 add_subdirectory(extern/libsqlite3)
 include_directories(extern/libsqlite3)
 
 set_target_properties(sqlite3 PROPERTIES FOLDER Extern)
+set_target_properties(jemalloc_jet PROPERTIES FOLDER Extern)
+set_target_properties(jemalloc_util_int_test PROPERTIES FOLDER Extern)
+set_target_properties(jemallocso PROPERTIES FOLDER Extern)
+set_target_properties(jemalloc PROPERTIES FOLDER Extern)
 
 SET(DARIADB_STORAGE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
             CACHE STRING "dariadb storage include dir for storage engine.")
