@@ -21,7 +21,7 @@
 #
 
 # Currently this file only enables building on Windows and not Cygwin or MSYS
-cmake_minimum_required (VERSION 3.4 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.2 FATAL_ERROR)
 
 # Set policy based on the CMake version
 cmake_policy(VERSION 3.2.0)
