@@ -91,23 +91,25 @@ if(SYSTEM_JEMALLOC)
    endif(JEMALLOC_FOUND)
 else(SYSTEM_JEMALLOC)
    MESSAGE(STATUS "LOCAL JEMALLOC")
+   set(BuildTests OFF)
+   add_subdirectory(extern/jemalloc-cmake)
+
    include_directories(extern/jemalloc-cmake/include/jemalloc)
    if(MSVC)
       include_directories(extern/jemalloc-cmake/include/msvc_compat)
    endif()
-   SET(JEMALLOC_LIBS jemalloso)
+   SET(JEMALLOC_LIBS jemallocso)
+
+   set_target_properties(jemalloc_jet PROPERTIES FOLDER Extern)
+   set_target_properties(jemalloc_util_int_test PROPERTIES FOLDER Extern)
+   set_target_properties(jemallocso PROPERTIES FOLDER Extern)
+   set_target_properties(jemalloc PROPERTIES FOLDER Extern)
 endif(SYSTEM_JEMALLOC)
 
-set(BuildTests OFF)
-add_subdirectory(extern/jemalloc-cmake)
 add_subdirectory(extern/libsqlite3)
 include_directories(extern/libsqlite3)
 
 set_target_properties(sqlite3 PROPERTIES FOLDER Extern)
-set_target_properties(jemalloc_jet PROPERTIES FOLDER Extern)
-set_target_properties(jemalloc_util_int_test PROPERTIES FOLDER Extern)
-set_target_properties(jemallocso PROPERTIES FOLDER Extern)
-set_target_properties(jemalloc PROPERTIES FOLDER Extern)
 
 SET(DARIADB_STORAGE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}
             CACHE STRING "dariadb storage include dir for storage engine.")
